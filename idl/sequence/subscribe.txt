@@ -1,0 +1,35 @@
+title Subscribe message
+
+participantgroup #lightblue **Region A**
+participant App
+participant Backend
+participant Sub Node
+database DB
+end
+
+entryspacing 1
+
+group Precondition
+Sub Node<#steelblue-]:SendData()
+activecolor #steelblue
+activate Sub Node
+end
+
+entryspacing 0.01
+
+App-#violet>Backend:SubscribeChat()
+activecolor #violet
+activate App
+activate Backend
+Backend-#lightgreen>Sub Node: SubscribeTopic()
+activecolor #lightgreen
+activate Backend
+activate Sub Node
+
+space
+rbox over Sub Node: New message
+
+Sub Node<#steelblue-]:stream.add(\n  SendDataRequest{}\n)
+Sub Node->DB: INSERT
+Sub Node-#lightgreen>Backend:stream.add(\n  SubscribeTopicResponse{}\n)
+Backend-#violet>App:stream.add(\n  SubscribeChatResponse{}\n)
