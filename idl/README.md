@@ -1,2 +1,0 @@
-# /idl
-- Interface Definition Language
