@@ -1,6 +1,8 @@
+# python3 -m grpc_tools.protoc --proto_path=. ./proto/transistor/v1/transistor.proto --python_out=. --grpc_python_out=.
+
 import grpc
-import transistor_pb2
-import transistor_pb2_grpc
+from gen.proto.transistor.v1 import transistor_pb2
+from gen.proto.transistor.v1 import transistor_pb2_grpc
 
 class TransistorClient:
     def __init__(self, addr="localhost:50051"):
@@ -13,6 +15,9 @@ class TransistorClient:
 
     def close(self):
         self.channel.close()
+    
+    def publish(self):
+        self.stub.Publish()
 
 # client = TransistorClient(addr="localhost:50051")
 # client.close()

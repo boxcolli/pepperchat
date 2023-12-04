@@ -14,6 +14,8 @@ import (
 	"github.com/boxcolli/go-transistor/collector/basiccollector"
 	"github.com/boxcolli/go-transistor/emitter/basicemitter"
 	"github.com/boxcolli/go-transistor/index/basicindex"
+	"github.com/boxcolli/go-transistor/io"
+	"github.com/boxcolli/go-transistor/io/reader/grpcreader"
 	"github.com/boxcolli/go-transistor/server/grpcserver"
 	"github.com/boxcolli/go-transistor/transistor"
 	"github.com/boxcolli/go-transistor/transistor/simpletransistor"
@@ -46,6 +48,7 @@ func main() {
 		for {
 			conn, err = grpc.Dial(*addr, dialOpts...)
 			if err != nil {
+				fmt.Printf("sub: trying to connect to %s...\n", *addr)
 				time.Sleep(time.Second * 2)
 				continue
 			}
@@ -53,15 +56,23 @@ func main() {
 		}
 		defer conn.Close()
 		client = pb.NewTransistorServiceClient(conn)
-		fmt.Println("connected with pub transistor")
+		fmt.Printf("connected with pub transistor (%s)\n", *addr)
 	}
 
 	// Subscribe
+	var streamReader io.StreamReader
 	{
 		var opts = []grpc.CallOption{}
-		stream, err := client.Subscribe(context.Background(), opts...)
-		if err != nil {
-			panic(err)
+		var stream pb.TransistorService_SubscribeClient
+		var err error
+		for {
+			stream, err = client.Subscribe(context.Background(), opts...)
+			if err != nil {
+				fmt.Printf("trying to subscribe..\n")
+				time.Sleep(time.Second * 2)
+				continue
+			}
+			break
 		}
 
 		// Send initial change
@@ -74,17 +85,19 @@ func main() {
 		}
 
 		fmt.Println("now listening..")
-		for {
-			res, err := stream.Recv()
-			if err != nil {
-				log.Fatalf("Subscribe() received error: %v\n", err)
-				break
-			}
+		streamReader = grpcreader.NewGrpcClientStream(stream)
 
-			msg := new(types.Message)
-			msg.Unmarshal(res.GetMsg())
-			log.Printf("Subscribe() receivd: %s\n", msg.String())
-		}
+		// for {
+		// 	res, err := stream.Recv()
+		// 	if err != nil {
+		// 		log.Fatalf("Subscribe() received error: %v\n", err)
+		// 		break
+		// 	}
+
+		// 	msg := new(types.Message)
+		// 	msg.Unmarshal(res.GetMsg())
+		// 	log.Printf("Subscribe() receivd: %s\n", msg.String())
+		// }
 	}
 
 	// Transistor
@@ -99,6 +112,14 @@ func main() {
 			simpletransistor.Option{},
 		)
 		log.Println("tr started.")
+
+		// Collect
+		go func() {
+			err := tr.Collect(streamReader)
+			if err != nil {
+				fmt.Printf("collect: received error: %v\n", err)
+			}
+		} ()
 	}
 
 	// Server

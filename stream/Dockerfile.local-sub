@@ -9,7 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . ./
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o /sub ./cmd/v2/sub/.
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o /sub ./cmd/sub/.
 
 # # Run the tests in the container
 # FROM build-stage AS run-test-stage
