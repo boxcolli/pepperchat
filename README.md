@@ -1,2 +1,2 @@
 # pepperchat
- Distributed chat service
+Distributed chat service

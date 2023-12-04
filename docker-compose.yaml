@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  pub:
+    build:
+      context: ./stream
+      dockerfile: Dockerfile.local-pub
+    environment:
+      - PORT=50050
+    ports:
+      - "50050:50050"
+  
+  sub:
+    build:
+      context: ./stream
+      dockerfile: Dockerfile.local-sub
+    environment:
+      - ADDR=:50050
+      - PORT=50051
+      - TOPIC=chat
+    ports:
+      - "50051:50051"

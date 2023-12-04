@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package transistor.v1;
+
+option go_package = "./pb";
+
+// import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+enum Method {
+    METHOD_UNSPECIFIED = 0;
+    METHOD_EMPTY = 1;
+    METHOD_CREATE = 2;
+    METHOD_UPDATE = 3;
+    METHOD_DELETE = 4;
+}
+
+message Topic {
+    repeated string tokens = 1;
+}
+
+message Message {
+    Mode mode = 1;
+    Topic topic = 2;
+    Method method = 3;
+    google.protobuf.Any data = 4;
+    google.protobuf.Timestamp timestamp = 5;
+}
+
+enum Mode {
+    MODE_UNSPECIFIED = 0;
+    MODE_ANY = 1;
+    MODE_ROUTE = 2;
+    MODE_ROOT = 3;
+}
+
+enum Operation {
+    OPERATION_UNSPECIFIED = 0;
+    OPERATION_ADD = 1;
+    OPERATION_DEL = 2;
+}
+
+message Change {
+    Mode mode = 1;
+    Operation op = 2;
+    Topic topic = 3;
+}
+
+service TransistorService {
+    // Open a new command line interface
+    rpc Command(CommandRequest) returns (stream CommandResponse) {}
+
+    // Receive a stream from a non-cluster node
+    rpc Publish(stream PublishRequest) returns (PublishResponse) {}
+
+    // Receive a stream from both cluster/non-cluster nodes
+    // Always the subscriber should approach to this server
+    rpc Subscribe(stream SubscribeRequest) returns (stream SubscribeResponse) {}
+}
+
+message PublishRequest {
+    Message msg = 1;
+}
+
+message PublishResponse {
+    repeated Change change = 1;
+}
+
+message SubscribeRequest {
+    Change change = 1;
+}
+
+message SubscribeResponse {
+    Message msg = 1;
+}
+
+message CommandRequest {
+    repeated string args = 1;
+}
+
+message CommandResponse {
+    string line = 1;
+}
