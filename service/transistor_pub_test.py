@@ -18,6 +18,9 @@ async def run() -> None:
                 + response.message
             )
 
+async def pub(stub: transistor_pb2_grpc.TransistorServiceStub) -> None:
+    stub.Publish()
+
 if __name__ == "__main__":
     logging.basicConfig()
     asyncio.run(run())

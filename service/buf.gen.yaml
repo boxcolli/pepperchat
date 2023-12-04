@@ -5,3 +5,5 @@ plugins:
   # dependencies
   - plugin: buf.build/protocolbuffers/python
     out: gen
+  - plugin: buf.build/protocolbuffers/pyi:v25.1
+    out: gen
