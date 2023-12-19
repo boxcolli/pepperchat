@@ -1,5 +1,5 @@
-# $ docker compose up
-# $ docker compose up --build
+# (start services)       $ docker-compose up
+# (force to build again) $ docker-compose up --build
 
 version: '3.8'
 services:
@@ -22,3 +22,15 @@ services:
       - TOPIC=chat
     ports:
       - "50051:50051"
+
+  service:
+    build:
+      context: ./service
+      dockerfile: Dockerfile
+    environment:
+      - PADDR=pub:50050
+      - SADDR=sub:50051
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    

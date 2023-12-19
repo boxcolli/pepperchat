@@ -19,7 +19,6 @@ import (
 	"github.com/boxcolli/go-transistor/server/grpcserver"
 	"github.com/boxcolli/go-transistor/transistor"
 	"github.com/boxcolli/go-transistor/transistor/simpletransistor"
-	"github.com/boxcolli/go-transistor/types"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/peterbourgon/ff/v4"
 	"google.golang.org/grpc"
@@ -76,9 +75,12 @@ func main() {
 		}
 
 		// Send initial change
-		cg := types.Change{ Op: types.OperationAdd, Topic: types.Topic{*topic} }
+		// cg := types.Change{ Op: types.OperationAdd, Topic: types.Topic{*topic} }
 		err = stream.Send(&pb.SubscribeRequest{
-			Change: cg.Marshal(),
+			Change: &pb.Change{
+				Op: pb.Operation_OPERATION_ADD,
+				Topic: &pb.Topic{ Tokens: []string{*topic} },
+			},
 		})
 		if err != nil {
 			panic(err)
@@ -114,12 +116,13 @@ func main() {
 		log.Println("tr started.")
 
 		// Collect
-		go func() {
-			err := tr.Collect(streamReader)
-			if err != nil {
-				fmt.Printf("collect: received error: %v\n", err)
-			}
-		} ()
+		// go func() {
+		// 	err := tr.Collect(streamReader)
+		// 	if err != nil {
+		// 		fmt.Printf("collect: received error: %v\n", err)
+		// 	}
+		// } ()
+		go tr.Collect(streamReader)
 	}
 
 	// Server

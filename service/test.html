@@ -1,0 +1,32 @@
+<!-- Open with browser to test -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <script>
+        // Replace with your server address and chat ID
+        const chatId = "mychat"; // Replace with actual chat ID
+        const ws = new WebSocket(`ws://localhost:8080/chat/${chatId}/ws`);
+
+        ws.onopen = function() {
+            console.log("Connected to the server");
+            // You can send messages using ws.send("Your message");
+        };
+
+        ws.onmessage = function(event) {
+            console.log("Received message:", event.data);
+        };
+
+        ws.onerror = function(error) {
+            console.error("WebSocket error:", error);
+        };
+
+        ws.onclose = function(event) {
+            console.log("WebSocket connection closed:", event.code, event.reason);
+        };
+    </script>
+</body>
+</html>
