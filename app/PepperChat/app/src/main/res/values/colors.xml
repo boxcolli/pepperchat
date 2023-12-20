@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pepper">#FFB58564</color>
+    <color name="dark_pepper">#FF403024</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray">#FF222222</color>
+    <color name="light_gray">#FF999999</color>
+</resources>
