@@ -17,57 +17,61 @@ type SocketBoard interface {
 }
 
 type socketBoard struct {
-	board map[string](map[chan<- OutType]bool)
-	mx    sync.RWMutex
+	stream 	pb.TransistorService_SubscribeClient
+	board 	map[string](map[chan<- OutType]bool)
+	mx    	sync.RWMutex
 }
 
 func NewSocketBoard(stream pb.TransistorService_SubscribeClient) SocketBoard {
 	b := &socketBoard{
+		stream: stream,
 		board: make(map[string]map[chan<- OutType]bool),
 	}
  
-	go func() {
-		for {
-			// Read message
-			res, err := stream.Recv()	// Block
-			if err != nil {
-				log.Fatalf("SocketBoard: stream end: %v\n", err)
-				break
-			}
-
-			// Convert response -> transistor message
-			trmsg := res.GetMsg()
-			tokens := trmsg.GetTopic().GetTokens()
-			if len(tokens) < 2 || tokens[0] != "chat" {
-				log.Printf("SocketBoard: wrong message topic: %+v\n", trmsg)
-				continue
-			}
-		
-			// Convert transistor message -> chat message
-			var msg types.Message
-			msgByte := trmsg.GetData().GetValue()
-			err = json.Unmarshal(msgByte, &msg)
-			if err != nil {
-				log.Printf("SocketBoard: unmarshal failed: %v\n", err)
-				continue
-			}
-			log.Printf("SocketBoard: received: %s\n", string(msgByte))
-			
-			// Push message
-			b.mx.RLock()
-			chset, ok := b.board[tokens[1]]
-			if !ok {
-				b.mx.RUnlock()
-				continue
-			}
-			for sub := range chset {
-				sub <- msgByte
-			}
-			b.mx.RUnlock()
-		}
-	} ()
+	go b.run()
 
 	return b
+}
+
+func (b *socketBoard) run() {
+	for {
+		// Read message
+		res, err := b.stream.Recv()	// Block
+		if err != nil {
+			log.Fatalf("SocketBoard: stream end: %v\n", err)
+			break
+		}
+
+		// Convert response -> transistor message
+		trmsg := res.GetMsg()
+		tokens := trmsg.GetTopic().GetTokens()
+		if len(tokens) < 2 || tokens[0] != "chat" {
+			log.Printf("SocketBoard: wrong message topic: %+v\n", trmsg)
+			continue
+		}
+	
+		// Convert transistor message -> chat message
+		var msg types.Message
+		msgByte := trmsg.GetData().GetValue()
+		err = json.Unmarshal(msgByte, &msg)
+		if err != nil {
+			log.Printf("SocketBoard: unmarshal failed: %v\n", err)
+			continue
+		}
+		log.Printf("SocketBoard: received: %s\n", string(msgByte))
+		
+		// Push message
+		b.mx.RLock()
+		chset, ok := b.board[tokens[1]]
+		if !ok {
+			b.mx.RUnlock()
+			continue
+		}
+		for sub := range chset {
+			sub <- msgByte
+		}
+		b.mx.RUnlock()
+	}
 }
 
 // Add implements SocketBoard.
@@ -83,7 +87,7 @@ func (b *socketBoard) Add(chatId string, ch chan<- OutType) {
 
 // Del implements SocketBoard.
 func (b *socketBoard) Del(chatId string, ch chan<- OutType) {
-	b.mx.Unlock()
+	b.mx.Lock()
 	defer b.mx.Unlock()
 
 	// Delete ch entry
