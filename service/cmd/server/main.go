@@ -99,7 +99,7 @@ func main() {
 		}
 
 		// Make channels
-		mch := make(chan []byte, chSize)
+		mch := make(chan socketboard.OutType, chSize)
 		sb.Add(chatId, mch)
 		stop := make(chan bool)
 
@@ -121,7 +121,9 @@ func main() {
 				return
 
 			case m := <- mch:
-				err := c.WriteJSON(m)
+				log.Printf("GetWebSocket(%s): transfer message: %+v\n", chatId, string(m))
+				err := c.WriteMessage(websocket.BinaryMessage, m)
+				// err := c.WriteJSON(m)
 				if err != nil {
 					// Something went wrong
 					log.Printf("GetWebSocket(%s): failed to write json: %v\n", chatId, err)

@@ -2,7 +2,6 @@ package socketboard
 
 import (
 	"testing"
-	"time"
 
 	"github.com/boxcolli/pepperchat/service/internal/stream"
 	"github.com/stretchr/testify/assert"
@@ -21,18 +20,7 @@ func TestBoard(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Read channel
-	ch := make(chan []byte, 10)
-	go func() {
-		for {
-			b, ok := <- ch
-			if !ok {
-				t.Log("channel close")
-				return
-			}
-
-			t.Logf("channel read: %s\n", string(b))
-		}
-	} ()
+	ch := make(chan OutType, 10)
 
 	// Add to board
 	sb := NewSocketBoard(sc.GetSubscribeStream())
@@ -42,5 +30,12 @@ func TestBoard(t *testing.T) {
 	err = sc.PublishMessage(chatId, userId, content)
 	assert.NoError(t, err)
 
-	time.Sleep(1 * time.Second)
+	b, ok := <- ch
+	if !ok {
+		t.Log("channel close")
+		return
+	}
+
+	t.Logf("channel read: %+v\n", b)
+	t.Logf("channel read: %s\n", string(b))
 }

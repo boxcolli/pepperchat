@@ -9,19 +9,21 @@ import (
 	"github.com/boxcolli/pepperchat/service/internal/types"
 )
 
+type OutType []byte
+
 type SocketBoard interface {
-	Add(chatId string, ch chan<- []byte)
-	Del(chatId string, ch chan<- []byte)
+	Add(chatId string, ch chan<- OutType)
+	Del(chatId string, ch chan<- OutType)
 }
 
 type socketBoard struct {
-	board map[string](map[chan<- []byte]bool)
+	board map[string](map[chan<- OutType]bool)
 	mx    sync.RWMutex
 }
 
 func NewSocketBoard(stream pb.TransistorService_SubscribeClient) SocketBoard {
 	b := &socketBoard{
-		board: make(map[string]map[chan<- []byte]bool),
+		board: make(map[string]map[chan<- OutType]bool),
 	}
  
 	go func() {
@@ -33,7 +35,7 @@ func NewSocketBoard(stream pb.TransistorService_SubscribeClient) SocketBoard {
 				break
 			}
 
-			// Convert transistor message
+			// Convert response -> transistor message
 			trmsg := res.GetMsg()
 			tokens := trmsg.GetTopic().GetTokens()
 			if len(tokens) < 2 || tokens[0] != "chat" {
@@ -41,7 +43,7 @@ func NewSocketBoard(stream pb.TransistorService_SubscribeClient) SocketBoard {
 				continue
 			}
 		
-			// Extract chat message
+			// Convert transistor message -> chat message
 			var msg types.Message
 			msgByte := trmsg.GetData().GetValue()
 			err = json.Unmarshal(msgByte, &msg)
@@ -49,6 +51,7 @@ func NewSocketBoard(stream pb.TransistorService_SubscribeClient) SocketBoard {
 				log.Printf("SocketBoard: unmarshal failed: %v\n", err)
 				continue
 			}
+			log.Printf("SocketBoard: received: %s\n", string(msgByte))
 			
 			// Push message
 			b.mx.RLock()
@@ -68,18 +71,18 @@ func NewSocketBoard(stream pb.TransistorService_SubscribeClient) SocketBoard {
 }
 
 // Add implements SocketBoard.
-func (b *socketBoard) Add(chatId string, ch chan<- []byte) {
+func (b *socketBoard) Add(chatId string, ch chan<- OutType) {
 	b.mx.Lock()
 	defer b.mx.Unlock()
 
 	if _, ok := b.board[chatId]; !ok {
-		b.board[chatId] = make(map[chan<- []byte]bool)
+		b.board[chatId] = make(map[chan<- OutType]bool)
 	}
 	b.board[chatId][ch] = true
 }
 
 // Del implements SocketBoard.
-func (b *socketBoard) Del(chatId string, ch chan<- []byte) {
+func (b *socketBoard) Del(chatId string, ch chan<- OutType) {
 	b.mx.Unlock()
 	defer b.mx.Unlock()
 

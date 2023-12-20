@@ -45,6 +45,7 @@ require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/boxcolli/go-transistor v0.0.0-20231204050058-147215735fed
 	github.com/google/uuid v1.5.0 // indirect
+	github.com/gorilla/websocket v1.5.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

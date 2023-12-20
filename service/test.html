@@ -17,7 +17,13 @@
         };
 
         ws.onmessage = function(event) {
-            console.log("Received message:", event.data);
+            // Assuming the server sends JSON data as a Blob
+            const reader = new FileReader();
+            reader.onload = function() {
+                const jsonData = JSON.parse(reader.result);
+                console.log("Received message:", jsonData);
+            };
+            reader.readAsText(event.data);
         };
 
         ws.onerror = function(error) {
